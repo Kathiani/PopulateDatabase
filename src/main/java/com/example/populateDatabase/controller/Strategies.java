@@ -1,7 +1,6 @@
 package com.example.populateDatabase.controller;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
