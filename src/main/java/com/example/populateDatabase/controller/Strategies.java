@@ -1,6 +1,9 @@
 package com.example.populateDatabase.controller;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Random;
+
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +26,7 @@ public class Strategies{
       JSONObject dataObject = jsonObject.getJSONObject("data");
       String uuid = dataObject.getString("uuid");
       String responseSendData = senddataResource(uuid);  //*adicionar um uuid específico
-      return responseSendData.toString();         
+      return "Dados permeados na base";         
     }
 
     public static String createCapability(){
@@ -38,24 +41,21 @@ public class Strategies{
       HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
-	   ResponseEntity<String> responseEntity = restTemplate.postForEntity(endpointUrl, requestEntity, String.class);
+	   ResponseEntity<String> responseEntity = restTemplate.postForEntity(endpointUrl, requestEntity, String.class);        
+      if (responseEntity.getStatusCode().is2xxSuccessful()) {
+	         System.out.println("Capacidade criada com sucesso!");
+	      } else {
+	      System.out.println("Erro ao criar a capacidade: " + responseEntity.getStatusCode());
+	   }
+		;
 
-        System.out.println("Olá, mundo!");
-        
-         if (responseEntity.getStatusCode().is2xxSuccessful()) {
-	                System.out.println("Capacidade criada com sucesso!");
-	            } else {
-	                System.out.println("Erro ao criar a capacidade: " + responseEntity.getStatusCode());
-	            }
-				;
-
-        return responseEntity.getBody();
+      return responseEntity.getBody();
     }
 
     public static String createResource(){
       String jsonBody = "{\n" +
                   "  \"data\": {\n" +
-                  "    \"description\": \"Um sensor de temperatura e umidade no campus da UFSCar\",\n" +
+                  "    \"description\": \"Um sensor de temperatura e umidade no pátio da UFSCar\",\n" +
                   "    \"capabilities\": [\n" +
                   "      \"temperature_and_humidity_monitoring\"\n" + //versão anterior era environment-monitoring
                   "    ],\n" +
@@ -82,13 +82,13 @@ public class Strategies{
 
     public static String senddataResource(String uuid){  
       ResponseEntity<String> responseEntity = ResponseEntity.ok().body("");
-      int batch = 1;
-      int collectioninterval = 10000; //em segundos feitos teste com 1000 e 5000
+      int batch = 10;
+      int collectioninterval = 1000; //pausa de 1 segundo para a próxima leitura
       
 
       for (int i = 0; i < batch; i++) {
          double temperature = generateTemperature();
-         double humidity = generateHumidity();
+         String humidity = generateHumidity();
          
          LocalDateTime now = LocalDateTime.now();
          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -100,7 +100,7 @@ public class Strategies{
                   "\"temperature_and_humidity_monitoring\": [" +
                         "{" +
                            "\"temperature\": \"%f\"," + 
-                           "\"humidity\": \"%f\"," + 
+                           "\"humidity\": \"%s\"," + 
                            "\"timestamp\": \"%s\"" + 
                         "}" +
                   "]" +
@@ -137,14 +137,18 @@ public class Strategies{
 
       public static double generateTemperature() {
         // Simplesmente gera um valor aleatório entre 0 e 5 para a temperatura
-        int valueRandom = (int) (Math.random() * 10) + 1;
-        return valueRandom * 5;
+        Random random = new Random();
+        int randomDecimal = random.nextInt(1000);
+        double randomValue = 30 + ((double) randomDecimal / 1000);
+        return randomValue;
     }
 
-    public static double generateHumidity() {
+    public static String generateHumidity() {
         // Simplesmente gera um valor aleatório entre 0 e 5 para a temperatura
-        int valueRandom = (int) (Math.random() * 10) + 1;
-        return valueRandom * 5;
+        Random random = new Random();
+        int randomValue = random.nextInt(61) + 30; 
+        String formattedValue = randomValue + "%";
+        return formattedValue;
     }
     
 
