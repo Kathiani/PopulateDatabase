@@ -1,4 +1,4 @@
-package com.example.populateDatabase.controller;
+package com.example.populateDatabase.start.controller;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -7,10 +7,10 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 @SpringBootApplication
 @EnableAutoConfiguration(exclude = DataSourceAutoConfiguration.class)
-public class PopulateDatabaseApplication {
+public class StartupPopulateDatabase {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PopulateDatabaseApplication.class, args);
+		SpringApplication.run(StartupPopulateDatabase.class, args);
 	}
 
 }

@@ -1,4 +1,4 @@
-package com.example.populateDatabase.controller;
+package com.example.populateDatabase.start.service;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,19 +16,8 @@ import org.springframework.web.client.RestTemplate;
 
 
 @RestController
-public class Strategies{
-   @GetMapping("/populate_database")
-      public static String populateDatabase(){
-      
-      //createCapability();  //*create capability*
-      String responseEntityResource = createResource(); 
-      JSONObject jsonObject = new JSONObject(responseEntityResource);
-      JSONObject dataObject = jsonObject.getJSONObject("data");
-      String uuid = dataObject.getString("uuid");
-      String responseSendData = senddataResource(uuid);  //*adicionar um uuid específico
-      return "Dados permeados na base";         
-    }
-
+public class Strategies{  // /*start
+ 
     public static String createCapability(){
       String jsonBody = "{\n" +
                   "  \"name\": \"temperature_and_humidity_monitoring\",\n" +
