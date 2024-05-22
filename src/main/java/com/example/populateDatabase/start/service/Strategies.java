@@ -1,27 +1,25 @@
 package com.example.populateDatabase.start.service;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Random;
 
-import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 
 
 @RestController
-public class Strategies{  // /*start
- 
+public class Strategies{  
     public static String createCapability(){
+      String name = "environment_monitor"; 
       String jsonBody = "{\n" +
-                  "  \"name\": \"temperature_and_humidity_monitoring\",\n" +
-                  "  \"description\": \"Measure the temperature and humidity of the environment\",\n" +
+                  "  \"name\": \"" + name + "\",\n" +
+                  "  \"description\": \"Measure conditions of the environment\",\n" +
                   "  \"capability_type\": \"sensor\"\n" +
                   "}";
 
@@ -32,9 +30,9 @@ public class Strategies{  // /*start
 		HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 	   ResponseEntity<String> responseEntity = restTemplate.postForEntity(endpointUrl, requestEntity, String.class);        
       if (responseEntity.getStatusCode().is2xxSuccessful()) {
-	         System.out.println("Capacidade criada com sucesso!");
+	         System.out.println("Capability was created!");
 	      } else {
-	      System.out.println("Erro ao criar a capacidade: " + responseEntity.getStatusCode());
+	         System.out.println("Error to create capability: " + responseEntity.getStatusCode());
 	   }
 		;
 
@@ -44,9 +42,9 @@ public class Strategies{  // /*start
     public static String createResource(){
       String jsonBody = "{\n" +
                   "  \"data\": {\n" +
-                  "    \"description\": \"Um sensor de temperatura e umidade no pátio da UFSCar\",\n" +
+                  "    \"description\": \"Sensores de monitoramento climático do parque ecológico de São Carlos-SP-BR\",\n" +
                   "    \"capabilities\": [\n" +
-                  "      \"temperature_and_humidity_monitoring\"\n" + //versão anterior era environment-monitoring
+                  "      \"environment_monitor\"\n" + //versão anterior era environment-monitoring
                   "    ],\n" +
                   "    \"status\": \"active\",\n" +
                   "    \"lat\": -23.559616,\n" +
@@ -61,9 +59,9 @@ public class Strategies{  // /*start
 		HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 	   ResponseEntity<String> responseEntity = restTemplate.postForEntity(endpointUrl, requestEntity, String.class);
       if (responseEntity.getStatusCode().is2xxSuccessful()) {
-	                System.out.println("Recurso criado com sucesso!");
+	                System.out.println("Resource was created!");
 	   } else {
-	                System.out.println("Erro ao criar recurso: " + responseEntity.getStatusCode());
+	                System.out.println("Error to create resource:" + responseEntity.getStatusCode());
 	      };
 				
       return responseEntity.getBody();
@@ -71,51 +69,52 @@ public class Strategies{  // /*start
 
     public static String senddataResource(String uuid){  
       ResponseEntity<String> responseEntity = ResponseEntity.ok().body("");
-      int batch = 10;
-      int collectioninterval = 1000; //pausa de 1 segundo para a próxima leitura
+      int batch = 2;
+      int collectioninterval = 1000; //stopping for one second
       
-
-      for (int i = 0; i < batch; i++) {
+      for (int i = 0; i < batch; i++){
          double temperature = generateTemperature();
-         String humidity = generateHumidity();
-         
-         LocalDateTime now = LocalDateTime.now();
-         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-         String horaAtual = now.format(formatter);
+         double humidity = generateHumidity();
+         double pressure = generatePressure();
 
-         String jsonBody = String.format(
+         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+         LocalDateTime timeReading = LocalDateTime.now();
+         LocalDateTime timeStoring = LocalDateTime.now().plusSeconds(3);        
+         String timeReadingFormat = timeReading.format(formatter);
+         String timeStoringFormat = timeStoring.format(formatter);
+           
+         String jsonBody = String.format(Locale.US,
             "{" +
                "\"data\": {" +
-                  "\"temperature_and_humidity_monitoring\": [" +
+                  "\"environment_monitor\": [" +
                         "{" +
-                           "\"temperature\": \"%f\"," + 
-                           "\"humidity\": \"%s\"," + 
+                           "\"temperature\": \"%.3f\"," + 
+                           "\"humidity\": \"%.3f\"," + 
+                           "\"pressure\": \"%.3f\"," + 
+                           //"\"read-date\": \"%s\"," + 
                            "\"timestamp\": \"%s\"" + 
                         "}" +
                   "]" +
                "}" +
-            "}", temperature, humidity, horaAtual);
+            "}", temperature, humidity, pressure, timeReadingFormat);// timeStoringFormat);
             
 
          RestTemplate restTemplate = new RestTemplate();
-         String endpointUrl =  String.format("http://10.10.10.104:8000/adaptor/resources/" + uuid + "/data");
-         System.err.println(endpointUrl);
-         System.err.println(jsonBody);
+         String endpointUrl =  String.format("http://10.10.10.104:8000/adaptor/resources/" + uuid + "/data");     
          HttpHeaders headers = new HttpHeaders();
 	   	headers.setContentType(MediaType.APPLICATION_JSON);
          try {
-               Thread.sleep(collectioninterval);
+              Thread.sleep(collectioninterval);
          } catch (InterruptedException e) {
-        // Tratamento da exceção aqui, se necessário
-          e.printStackTrace(); // ou qualquer outra ação desejada
+              e.printStackTrace(); 
          }
 
          HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 	      responseEntity = restTemplate.postForEntity(endpointUrl, requestEntity, String.class);
          if (responseEntity.getStatusCode().is2xxSuccessful()) {
-	                System.out.println("Dado adicionado com sucesso!");
+	                System.out.println("Data was added to resource!");
 	      } else {
-	                System.out.println("Erro ao adicionar dado: " + responseEntity.getStatusCode());
+	                System.out.println("Error to add data: " + responseEntity.getStatusCode());
 	      };
         
       }
@@ -124,22 +123,27 @@ public class Strategies{  // /*start
 			    
    }
 
-      public static double generateTemperature() {
-        // Simplesmente gera um valor aleatório entre 0 e 5 para a temperatura
-        Random random = new Random();
-        int randomDecimal = random.nextInt(1000);
-        double randomValue = 30 + ((double) randomDecimal / 1000);
-        return randomValue;
+   public static double generateTemperature() {
+      Random random = new Random();
+      int randomDecimal = random.nextInt(1000);
+      double randomValue = 30 + ((double) randomDecimal / 1000);
+      return randomValue;
     }
 
-    public static String generateHumidity() {
-        // Simplesmente gera um valor aleatório entre 0 e 5 para a temperatura
-        Random random = new Random();
-        int randomValue = random.nextInt(61) + 30; 
-        String formattedValue = randomValue + "%";
-        return formattedValue;
+   public static double generateHumidity() {
+      Random random = new Random();
+      int randomDecimal = random.nextInt(1000);
+      double randomValue = 30 + ((double) randomDecimal / 1000);
+      return randomValue;
     }
     
+   public static double generatePressure() {
+      double min = 900.0;
+      double max = 1100.0;
+      Random rand = new Random();
+      double pressureValue = min + rand.nextDouble() * (max - min);
+      return pressureValue;   
+   }
 
 
 }
